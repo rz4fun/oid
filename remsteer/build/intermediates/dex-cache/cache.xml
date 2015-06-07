@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/home/ruizhang/Android/Sdk/extras/android/m2repository/com/android/support/support-v4/18.0.0/support-v4-18.0.0.jar"
+        jumboMode="false"
+        revision="23.0.0 rc2"
+        sha1="44ec51e9d395a47aab135e5e1b556c0007442156">
+        <dex dex="/home/ruizhang/project/rz4fun/oid/remsteer/app/build/intermediates/pre-dexed/debug/support-v4-18.0.0-6c23c0f55459856f63d2e792f0a7e389e6b9ca02.jar" />
+    </item>
+    <item
+        jar="/home/ruizhang/project/rz4fun/oid/remsteer/app/build/intermediates/exploded-aar/com.android.support/appcompat-v7/18.0.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.0 rc2"
+        sha1="8f11f56e350eacabf2273f646d981356eea0ed77">
+        <dex dex="/home/ruizhang/project/rz4fun/oid/remsteer/app/build/intermediates/pre-dexed/debug/classes-fb1d82503d5e35fb9b21416a255810056f9c4404.jar" />
+    </item>
+
+</items>

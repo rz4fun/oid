@@ -1,0 +1,50 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:columnCount="6"
+    android:orientation="horizontal"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="rz.remotesteer.DashActivity" >
+
+    <ImageView
+        android:id="@+id/steer_image"
+        android:layout_width="220dp"
+        android:layout_height="220dp"
+        android:src="@drawable/wood"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/status"
+        android:layout_alignBottom="@+id/steer_image"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
+
+    <ToggleButton
+        android:id="@+id/power_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:background="@drawable/power_button_toggle"
+        android:text="ToggleButton" />
+
+    <SeekBar
+        android:id="@+id/paddle_seekbar"
+        style="@dimen/activity_vertical_margin"
+        android:layout_width="300dp"
+        android:layout_height="30dp"
+        android:minHeight="13dp"
+        android:minWidth="300dp"
+        android:rotation="0"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+</RelativeLayout>
