@@ -21,7 +21,7 @@
 
         <rz.remotesteer.VerticalSeekBar
             android:id="@+id/speed_seekbar"
-            android:max="255"
+            android:max="90"
             android:layout_width="wrap_content"
             android:layout_height="221dp"
             android:progress="0"

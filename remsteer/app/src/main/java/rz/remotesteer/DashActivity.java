@@ -89,7 +89,7 @@ public class DashActivity extends ActionBarActivity {
 
       @Override
       public void onStopTrackingTouch(SeekBar arg0) {
-        SetSpeed(0);
+        SetSpeed(SPEED_ZERO);
         arg0.setProgress(0);
       }
     });
@@ -163,8 +163,15 @@ public class DashActivity extends ActionBarActivity {
   
   private void SetSpeed(int speed) {
     if (engine_on_) {
-      speed_textview_.setText("" + speed);
-      new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
+      if (drive_mode_ == DRIVE_FORWARD) {
+        new VehicleController().execute(COMMAND_CATEGORY_SPEED, SPEED_ZERO - speed);
+        speed_textview_.setText("D: " + speed);
+      } else if (drive_mode_ == DRIVE_BACKWARD) {
+        new VehicleController().execute(COMMAND_CATEGORY_SPEED, SPEED_ZERO + speed);
+        speed_textview_.setText("R: " + speed);
+      } else {
+        new VehicleController().execute(COMMAND_CATEGORY_SPEED, SPEED_ZERO);
+      }
       Log.d("Remote Steer", "Speed: " + speed);
     }
   }
@@ -252,6 +259,10 @@ public class DashActivity extends ActionBarActivity {
   public static final int STEER_LEFT = -1;
   public static final int STEER_NEUTRAL = 0;
   public static final int STEER_RIGHT = 1;
+
+  public static final int SPEED_ZERO = 90;
+  public static final int SPEED_FORWARD_MAX = 0;
+  public static final int SPEED_BACKWARD_MAX = 180;
   
   private class EngineStarter extends AsyncTask<String, Void, String> {
 
