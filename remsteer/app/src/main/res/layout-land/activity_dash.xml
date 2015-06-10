@@ -39,8 +39,8 @@
 
         <ImageView
             android:id="@+id/steer_image"
-            android:layout_width="220dp"
-            android:layout_height="220dp"
+            android:layout_width="280dp"
+            android:layout_height="280dp"
             android:src="@drawable/sw"
             android:layout_gravity="center"
             android:layout_alignParentBottom="true"
