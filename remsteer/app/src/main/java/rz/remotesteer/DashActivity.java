@@ -4,7 +4,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -19,10 +18,8 @@ import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.OrientationEventListener;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -72,7 +69,7 @@ public class DashActivity extends ActionBarActivity {
 
       @Override
       public void onClick(View v) {
-        if (!power_on_) {
+        if (!engine_on_) {
           ConnectToVehicle();
         } else {
           DisconnectFromVehicle();
@@ -88,12 +85,11 @@ public class DashActivity extends ActionBarActivity {
 
       @Override
       public void onStartTrackingTouch(SeekBar arg0) {
-			
       }
 
       @Override
       public void onStopTrackingTouch(SeekBar arg0) {
-        SetSpeed(0);
+        SetSpeed(SPEED_ZERO);
         arg0.setProgress(0);
       }
     });
@@ -101,18 +97,26 @@ public class DashActivity extends ActionBarActivity {
     InitializeRotationMeter();
   }
 
-  
+
+  @Override
+  public void onBackPressed() {
+    DisconnectFromVehicle();
+    super.onBackPressed();
+  }
+
+
   private void ConnectToVehicle() {
     int count = 0;
     engine_start_button_.setBackgroundColor(Color.YELLOW);
     engine_start_button_.setEnabled(false);
     while (count++ < 3) {
       try {
-        if (new EngineStarter().execute("").get().equals("ON")) {
+        if (new EngineStarter().execute("Start").get().equals("OK")) {
           engine_start_button_.setBackgroundColor(Color.GREEN);
           engine_start_button_.setChecked(true);
           engine_start_button_.setEnabled(true);
-          Toast.makeText(DashActivity.this, "Engine started", Toast.LENGTH_SHORT).show();
+          Toast.makeText(DashActivity.this, "Engine on", Toast.LENGTH_SHORT).show();
+          engine_on_ = true;
           return;
         }
         Toast.makeText(DashActivity.this, "Try starting engine X" + count, Toast.LENGTH_SHORT).show();
@@ -125,15 +129,20 @@ public class DashActivity extends ActionBarActivity {
     engine_start_button_.setBackgroundColor(Color.RED);
     engine_start_button_.setEnabled(true);
     engine_start_button_.setChecked(false);
+    engine_on_ = false;
   }
   
   
   private void DisconnectFromVehicle() {
+    Log.d("Remote Steer", "Turing off engine...");
     try {
-      if (new EngineStarter().execute("").get().equals("OFF")) {
+      if (new EngineStarter().execute("Shutdown").get().equals("OK")) {
         engine_start_button_.setBackgroundColor(Color.RED);
         engine_start_button_.setChecked(false);
         engine_start_button_.setEnabled(true);
+        Toast.makeText(DashActivity.this, "Engine off", Toast.LENGTH_SHORT).show();
+        engine_on_ = false;
+        Log.d("Remote Steer", " Engine off.");
       }
     } catch (InterruptedException e) {
       e.printStackTrace();
@@ -144,20 +153,32 @@ public class DashActivity extends ActionBarActivity {
   
   
   private void SetSteer(int steer_angle) {
-    new VehicleController().execute(COMMAND_CATEGORY_STEER, steer_angle);
-    Log.d("Remote Steer", "Steer: " + steer_angle);
+    if (engine_on_) {
+      steering_wheel_imageview_.setRotation(steer_angle - 90);
+      new VehicleController().execute(COMMAND_CATEGORY_STEER, steer_angle);
+      Log.d("Remote Steer", "Steer: " + steer_angle);
+    }
   }
   
   
   private void SetSpeed(int speed) {
-    new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
-    speed_textview_.setText("" + speed);
-    Log.d("Remote Steer", "Speed: " + speed);
+    if (engine_on_) {
+      if (drive_mode_ == DRIVE_FORWARD) {
+        new VehicleController().execute(COMMAND_CATEGORY_SPEED, SPEED_ZERO - speed);
+        speed_textview_.setText("D: " + speed);
+      } else if (drive_mode_ == DRIVE_BACKWARD) {
+        new VehicleController().execute(COMMAND_CATEGORY_SPEED, SPEED_ZERO + speed);
+        speed_textview_.setText("R: " + speed);
+      } else {
+        new VehicleController().execute(COMMAND_CATEGORY_SPEED, SPEED_ZERO);
+      }
+      Log.d("Remote Steer", "Speed: " + speed);
+    }
   }
   
   
   private int InitializeRotationMeter() {
-    orientation_event_listener_ = new OrientationEventListener(this, SensorManager.SENSOR_DELAY_NORMAL) {
+    orientation_event_listener_ = new OrientationEventListener(this, SensorManager.SENSOR_DELAY_GAME) {
       @SuppressLint("NewApi")
 	  @Override
       public void onOrientationChanged(int orientation) {
@@ -174,7 +195,7 @@ public class DashActivity extends ActionBarActivity {
           return;
         }
         rotation_degree_ = tmp_rotation_value - 180;
-        steering_wheel_imageview_.setRotation(orientation + 90);
+        //steering_wheel_imageview_.setRotation(orientation + 90);
         SetSteer(rotation_degree_);
       }
     };
@@ -182,6 +203,7 @@ public class DashActivity extends ActionBarActivity {
       orientation_event_listener_.enable();
       return 0;
     } else{
+      SetSteer(90);
       return 1;
     }
   }
@@ -206,12 +228,11 @@ public class DashActivity extends ActionBarActivity {
     return super.onOptionsItemSelected(item);
   }
 
-  private boolean power_on_ = false;
+  private boolean engine_on_ = false;
   private OrientationEventListener orientation_event_listener_;
   private int rotation_degree_;
   private int speed_;
   private ImageView steering_wheel_imageview_;
-  //private SeekBar paddle_seekbar_;
   private Switch drive_reverse_switch_;
   private VerticalSeekBar speed_seekbar_;
   private TextView status_textview_;
@@ -229,7 +250,7 @@ public class DashActivity extends ActionBarActivity {
   
   public static final int COMMAND_CATEGORY_SPEED = 1;
   public static final int COMMAND_CATEGORY_STEER = 2;
-  public static final String COMMAND_OFF = "0";
+  public static final String COMMAND_OFF = "0#";
 
   public static final int DRIVE_FORWARD = 1;
   public static final int DRIVE_NEUTRAL = 0;
@@ -238,42 +259,68 @@ public class DashActivity extends ActionBarActivity {
   public static final int STEER_LEFT = -1;
   public static final int STEER_NEUTRAL = 0;
   public static final int STEER_RIGHT = 1;
+
+  public static final int SPEED_ZERO = 90;
+  public static final int SPEED_FORWARD_MAX = 0;
+  public static final int SPEED_BACKWARD_MAX = 180;
   
   private class EngineStarter extends AsyncTask<String, Void, String> {
 
 	@Override
 	protected String doInBackground(String... params) {
+      int mode = -1;
+      if (params[0].equals("Start")) {
+        mode = 1;
+      } else if (params[0].equals("Shutdown")) {
+        mode = 0;
+      }
       if (socket_ == null) {
-        socket_ = new Socket();
+        if (mode == 1) {
+          socket_ = new Socket();
+        } else if (mode == 0) {
+          // no existing connection
+          return "OK";
+        }
       }
       if (socket_.isConnected()) {
-        try {
-          command_writer_.write(COMMAND_OFF);
-          command_writer_.flush();
-          command_writer_.close();
-          command_writer_ = null;
-          socket_.close();
-          socket_ = null;
-          return "OFF";
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-        return "";
-      } else {
-        try {
-          socket_.connect(InetSocketAddress.createUnresolved("192.168.240.1", 5678), 3000);
-          if (socket_.isConnected()) {
-            command_writer_ = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket_.getOutputStream())), true);
-            return "ON";
+        if (mode == 1) {
+          return "";
+        } else if (mode == 0) {
+          try {
+            command_writer_.write(COMMAND_OFF);
+            command_writer_.flush();
+            command_writer_.close();
+            command_writer_ = null;
+            socket_.close();
+            socket_ = null;
+            return "OK";
+          } catch (IOException e) {
+            e.printStackTrace();
           }
           return "";
-        } catch (UnknownHostException e) {
-          Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
-        } catch (IOException e) {
-          Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
         }
-        return "";
+      } else {
+        if (mode == 1) {
+          try {
+            socket_.connect(new InetSocketAddress("192.168.240.1", 5678), 3000);
+            if (socket_.isConnected()) {
+              command_writer_ = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket_.getOutputStream())), true);
+              return "OK";
+            }
+            return "";
+          } catch (UnknownHostException e) {
+            Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
+          } catch (IOException e) {
+            Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
+          }
+          return "";
+        } else if (mode == 0) {
+          // socket_ is present but there is no connection
+          socket_ = null;
+          return "OK";
+        }
       }
+      return "";
     }
   }
   
@@ -289,15 +336,15 @@ public class DashActivity extends ActionBarActivity {
 		int value = command[1];
 		if (category == COMMAND_CATEGORY_STEER) {
           if (steer_direction_ == STEER_LEFT) {
-            command_writer_.write("L:" + value + "#");
+            command_writer_.write("L" + value + "#");
           } else if (steer_direction_ == STEER_RIGHT) {
-            command_writer_.write("R:" + value + "#");
+            command_writer_.write("R" + value + "#");
           }
 		} else if (category == COMMAND_CATEGORY_SPEED) {
           if (drive_mode_ == DRIVE_FORWARD) {
-            command_writer_.write("F:" + value + "#");
+            command_writer_.write("F" + value + "#");
           } else if (drive_mode_ == DRIVE_BACKWARD) {
-            command_writer_.write("B:" + value + "#");
+            command_writer_.write("B" + value + "#");
           }
 		}
 		command_writer_.flush();
