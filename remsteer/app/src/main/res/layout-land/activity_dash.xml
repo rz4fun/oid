@@ -23,7 +23,7 @@
             android:id="@+id/speed_seekbar"
             android:max="90"
             android:layout_width="wrap_content"
-            android:layout_height="241dp"
+            android:layout_height="fill_parent"
             android:progress="0"
             android:layout_alignBottom="@+id/steer_image"
             android:layout_alignParentRight="true"
@@ -39,9 +39,9 @@
 
         <ImageView
             android:id="@+id/steer_image"
-            android:layout_width="280dp"
-            android:layout_height="280dp"
-            android:src="@drawable/sw"
+            android:layout_width="260dp"
+            android:layout_height="260dp"
+            android:src="@drawable/sw4"
             android:layout_gravity="center"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true" />
