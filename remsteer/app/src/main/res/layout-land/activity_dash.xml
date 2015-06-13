@@ -39,8 +39,8 @@
 
         <ImageView
             android:id="@+id/steer_image"
-            android:layout_width="260dp"
-            android:layout_height="260dp"
+            android:layout_width="240dp"
+            android:layout_height="240dp"
             android:src="@drawable/sw4"
             android:layout_gravity="center"
             android:layout_alignParentBottom="true"
@@ -177,6 +177,39 @@
                 android:layout_alignEnd="@+id/power_button"
                 android:layout_column="2"
                 android:layout_gravity="center_horizontal" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"></TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"></TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"></TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"></TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"></TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/engine_button"
+                android:layout_column="2"
+                android:src="@drawable/b4_120_red"
+                android:background="@android:color/transparent" />
         </TableRow>
 
     </TableLayout>

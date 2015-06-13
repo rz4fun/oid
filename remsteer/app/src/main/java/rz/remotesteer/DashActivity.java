@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 
 import com.example.remotesteer.R;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.support.v7.app.ActionBarActivity;
 import android.annotation.SuppressLint;
@@ -25,12 +26,14 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+import android.os.Vibrator;
 
 public class DashActivity extends ActionBarActivity {
 
@@ -45,10 +48,13 @@ public class DashActivity extends ActionBarActivity {
     steering_wheel_imageview_ = (ImageView)findViewById(R.id.steer_image);
     speed_seekbar_ = (VerticalSeekBar)findViewById(R.id.speed_seekbar);
     engine_start_button_ = (ToggleButton)findViewById(R.id.power_button);
+    engine_button_ = (ImageButton)findViewById(R.id.engine_button);
     final TextView d_textview = (TextView)findViewById(R.id.d_textview);
     final TextView r_textview = (TextView)findViewById(R.id.r_textview);
     // non UI variables
     drive_mode_ = DRIVE_FORWARD;
+    vibrator_ = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
+    try_engine_message_ = Toast.makeText(DashActivity.this, "Try starting engine", Toast.LENGTH_SHORT);
     // Configuring the drive-reverse switch.
     drive_reverse_switch_.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
       @Override
@@ -66,6 +72,18 @@ public class DashActivity extends ActionBarActivity {
     });
     // Configuring the engine start button.
     engine_start_button_.setOnClickListener(new OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        if (!engine_on_) {
+          ConnectToVehicle();
+        } else {
+          DisconnectFromVehicle();
+        }
+      }
+    });
+    // Configuring the engine start button.
+    engine_button_.setOnClickListener(new OnClickListener() {
 
       @Override
       public void onClick(View v) {
@@ -109,17 +127,22 @@ public class DashActivity extends ActionBarActivity {
     int count = 0;
     engine_start_button_.setBackgroundColor(Color.YELLOW);
     engine_start_button_.setEnabled(false);
-    while (count++ < 3) {
+    engine_button_.setImageResource(R.drawable.b4_120_yellow);
+    engine_button_.setEnabled(false);
+    vibrator_.vibrate(300);
+    try_engine_message_.show();
+    while (++count <= 3) {
       try {
         if (new EngineStarter().execute("Start").get().equals("OK")) {
           engine_start_button_.setBackgroundColor(Color.GREEN);
           engine_start_button_.setChecked(true);
           engine_start_button_.setEnabled(true);
+          engine_button_.setImageResource(R.drawable.b4_120_green);
+          engine_button_.setEnabled(true);
           Toast.makeText(DashActivity.this, "Engine on", Toast.LENGTH_SHORT).show();
           engine_on_ = true;
           return;
         }
-        Toast.makeText(DashActivity.this, "Try starting engine X" + count, Toast.LENGTH_SHORT).show();
       } catch (InterruptedException e) {
         e.printStackTrace();
       } catch (ExecutionException e) {
@@ -129,6 +152,8 @@ public class DashActivity extends ActionBarActivity {
     engine_start_button_.setBackgroundColor(Color.RED);
     engine_start_button_.setEnabled(true);
     engine_start_button_.setChecked(false);
+    engine_button_.setImageResource(R.drawable.b4_120_red);
+    engine_button_.setEnabled(true);
     engine_on_ = false;
   }
   
@@ -140,6 +165,8 @@ public class DashActivity extends ActionBarActivity {
         engine_start_button_.setBackgroundColor(Color.RED);
         engine_start_button_.setChecked(false);
         engine_start_button_.setEnabled(true);
+        engine_button_.setImageResource(R.drawable.b4_120_red);
+        engine_button_.setEnabled(true);
         Toast.makeText(DashActivity.this, "Engine off", Toast.LENGTH_SHORT).show();
         engine_on_ = false;
         Log.d("Remote Steer", " Engine off.");
@@ -238,6 +265,7 @@ public class DashActivity extends ActionBarActivity {
   private TextView status_textview_;
   private TextView speed_textview_;
   private ToggleButton engine_start_button_;
+  private ImageButton engine_button_;
   
   private Socket socket_;
   private PrintWriter command_writer_;
@@ -263,11 +291,16 @@ public class DashActivity extends ActionBarActivity {
   public static final int SPEED_ZERO = 90;
   public static final int SPEED_FORWARD_MAX = 0;
   public static final int SPEED_BACKWARD_MAX = 180;
+
+  private Vibrator vibrator_;
+  private Toast try_engine_message_;
+
   
   private class EngineStarter extends AsyncTask<String, Void, String> {
 
 	@Override
 	protected String doInBackground(String... params) {
+
       int mode = -1;
       if (params[0].equals("Start")) {
         mode = 1;
@@ -302,15 +335,20 @@ public class DashActivity extends ActionBarActivity {
       } else {
         if (mode == 1) {
           try {
+            //Toast.makeText(DashActivity.this, "Bullshit on", Toast.LENGTH_SHORT).show();
+            //vibrator_.vibrate(300);
             socket_.connect(new InetSocketAddress("192.168.240.1", 5678), 3000);
             if (socket_.isConnected()) {
               command_writer_ = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket_.getOutputStream())), true);
               return "OK";
             }
+            Thread.sleep(1000);
             return "";
           } catch (UnknownHostException e) {
             Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
           } catch (IOException e) {
+            Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
+          } catch (InterruptedException e) {
             Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
           }
           return "";
