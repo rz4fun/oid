@@ -35,13 +35,16 @@ public class VerticalSeekBar extends SeekBar {
         setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth());
     }
 
-
     protected void onDraw(Canvas c) {
         c.rotate(-90);
         c.translate(-getHeight(), 0);
         super.onDraw(c);
     }
 
+    @Override public synchronized void setProgress(int progress) {
+        super.setProgress(progress);
+        onSizeChanged(getWidth(), getHeight(), 0, 0);
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -53,12 +56,14 @@ public class VerticalSeekBar extends SeekBar {
                 super.onTouchEvent(event);
                 break;
             case MotionEvent.ACTION_DOWN:
+                //super.onTouchEvent(event);
+                break;
             case MotionEvent.ACTION_MOVE:
-                setProgress(getMax() - (int) (getMax() * event.getY() / getHeight()));
-                onSizeChanged(getWidth(), getHeight(), 0, 0);
+                int progress = getMax() - (int)(getMax() * (event.getY() / getHeight()));
+                Log.d("remote steer: ", "Y=" + event.getY() + "; H=" + getHeight() + "; max=" + getMax() + "; Prog=" + progress);
+                setProgress(progress);
                 break;
             case MotionEvent.ACTION_CANCEL:
-                setProgress(0);
                 break;
         }
         return true;
