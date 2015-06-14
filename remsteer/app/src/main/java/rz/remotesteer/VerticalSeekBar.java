@@ -59,8 +59,6 @@ public class VerticalSeekBar extends SeekBar {
         super.onTouchEvent(event);
         break;
       case MotionEvent.ACTION_DOWN:
-        //super.onTouchEvent(event);
-        break;
       case MotionEvent.ACTION_MOVE:
         setProgress(getMax() - (int)(getMax() * (event.getY() / getHeight())));
         break;

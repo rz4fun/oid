@@ -134,10 +134,6 @@ public class DashActivity extends ActionBarActivity {
 
   private void SetSteer(int steer_angle) {
     if (engine_on_) {
-      if (!(steer_angle >= 0 && steer_angle <= 180)) {
-        new VehicleController().execute(COMMAND_CATEGORY_STEER, STEER_CENTER);
-        return;
-      }
       steering_wheel_imageview_.setRotation(steer_angle - 90);
       new VehicleController().execute(COMMAND_CATEGORY_STEER, steer_angle);
       Log.d("Remote Steer", "Steer: " + steer_angle);
@@ -146,10 +142,6 @@ public class DashActivity extends ActionBarActivity {
   
   private void SetSpeed(int speed) {
     if (engine_on_) {
-      if (!(speed >= 0 && speed <= 180)) {
-        new VehicleController().execute(COMMAND_CATEGORY_SPEED, SPEED_ZERO);
-        return;
-      }
       // TODO: add UI updates
       new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
       speed_textview_.setText((speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed)) + "");
@@ -159,6 +151,7 @@ public class DashActivity extends ActionBarActivity {
   
   
   private int InitializeRotationMeter() {
+    steering_wheel_imageview_.setRotation(STEER_CENTER - 90);
     orientation_event_listener_ = new OrientationEventListener(this, SensorManager.SENSOR_DELAY_GAME) {
       @SuppressLint("NewApi")
 	  @Override
