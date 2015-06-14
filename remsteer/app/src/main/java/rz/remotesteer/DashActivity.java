@@ -145,8 +145,7 @@ public class DashActivity extends ActionBarActivity {
   }
   
   private void SetSpeed(int speed) {
-    //if (engine_on_) {
-    {
+    if (engine_on_) {
       if (!(speed >= 0 && speed <= 180)) {
         new VehicleController().execute(COMMAND_CATEGORY_SPEED, SPEED_ZERO);
         return;
