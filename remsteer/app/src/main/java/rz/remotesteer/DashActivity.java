@@ -7,12 +7,10 @@ import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.concurrent.ExecutionException;
 
-import com.example.remotesteer.R;
+import com.rz4fun.remotesteer.R;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.support.v7.app.ActionBarActivity;
 import android.annotation.SuppressLint;
 import android.hardware.SensorManager;
@@ -24,12 +22,10 @@ import android.view.MenuItem;
 import android.view.OrientationEventListener;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Vibrator;
