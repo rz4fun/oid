@@ -5,8 +5,8 @@ android {
     buildToolsVersion "23.0.0 rc2"
 
     defaultConfig {
-        applicationId "com.example.remotesteer"
-        minSdkVersion 14
+        applicationId "com.rz4fun.remotesteer"
+        minSdkVersion 13
         targetSdkVersion 21
     }
 
