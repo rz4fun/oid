@@ -30,7 +30,7 @@
             android:layout_alignParentEnd="true"
             android:layout_gravity="center"
             android:progressDrawable="@android:color/transparent"
-            android:thumb="@drawable/pedal_100_3"
+            android:thumb="@drawable/pedal_100"
             android:paddingTop="7dp"
             android:background="@drawable/plate"/>
     </FrameLayout>
