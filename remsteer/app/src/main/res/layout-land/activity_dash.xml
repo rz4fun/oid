@@ -30,7 +30,7 @@
             android:layout_alignParentEnd="true"
             android:layout_gravity="center"
             android:progressDrawable="@android:color/transparent"
-            android:thumb="@drawable/pedal_100_3"
+            android:thumb="@drawable/pedal_100"
             android:paddingTop="7dp"
             android:background="@drawable/plate"/>
     </FrameLayout>
@@ -162,6 +162,54 @@
                 android:layout_toEndOf="@+id/textView2"
                 android:layout_column="2"
                 android:layout_gravity="center_horizontal" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/textView3"
+                android:layout_column="2" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/textView4"
+                android:layout_column="2" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Light"
+                android:id="@+id/textView"
+                android:layout_column="2"
+                android:layout_gravity="center" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Switch
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/light_switch"
+                android:layout_column="2" />
         </TableRow>
 
     </TableLayout>
