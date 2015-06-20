@@ -46,28 +46,24 @@ public class DashActivity extends ActionBarActivity {
     steering_wheel_imageview_ = (ImageView)findViewById(R.id.steer_image);
     speed_seekbar_ = (VerticalSeekBar)findViewById(R.id.speed_seekbar);
     engine_button_ = (ImageButton)findViewById(R.id.engine_button);
+    light_switch_ = (Switch)findViewById(R.id.light_switch);
     final TextView d_textview = (TextView)findViewById(R.id.d_textview);
     final TextView r_textview = (TextView)findViewById(R.id.r_textview);
     // non UI variables
     vibrator_ = (Vibrator)this.getSystemService(Context.VIBRATOR_SERVICE);
-    // Configuring the drive-reverse switch.
-    /*
-    drive_reverse_switch_ = (Switch)findViewById(R.id.drive_reverse_switch);
-    drive_reverse_switch_.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+    // Configuring the light switch.
+    light_switch_.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
       @Override
       public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-        if (isChecked) {
-          drive_mode_ = DRIVE_BACKWARD;
-          r_textview.setTextColor(Color.GREEN);
-          d_textview.setTextColor(Color.GRAY);
-        } else {
-          drive_mode_ = DRIVE_FORWARD;
-          r_textview.setTextColor(Color.GRAY);
-          d_textview.setTextColor(Color.GREEN);
+        if (engine_on_) {
+          if (isChecked) {
+            new VehicleController().execute(COMMAND_CATEGORY_LIGHT, LIGHT_ON);
+          } else {
+            new VehicleController().execute(COMMAND_CATEGORY_LIGHT, LIGHT_OFF);
+          }
         }
       }
     });
-    */
     // Configuring the engine start button.
     engine_button_.setOnClickListener(new OnClickListener() {
       @Override
@@ -202,6 +198,7 @@ public class DashActivity extends ActionBarActivity {
   private TextView status_textview_;
   private TextView speed_textview_;
   private ImageButton engine_button_;
+  private Switch light_switch_;
   
   private Socket socket_;
   private PrintWriter command_writer_;
@@ -210,11 +207,13 @@ public class DashActivity extends ActionBarActivity {
   
   public static final int COMMAND_CATEGORY_SPEED = 1;
   public static final int COMMAND_CATEGORY_STEER = 2;
+  public static final int COMMAND_CATEGORY_LIGHT = 3;
   public static final String COMMAND_OFF = "0#";
 
   public static final int STEER_CENTER = 90;
-
   public static final int SPEED_ZERO = 90;
+  public static final int LIGHT_ON = 1;
+  public static final int LIGHT_OFF = 0;
 
   private Vibrator vibrator_;
 
@@ -287,6 +286,8 @@ public class DashActivity extends ActionBarActivity {
         command_writer_.write("S" + value + "#");
       } else if (category == COMMAND_CATEGORY_SPEED) {
         command_writer_.write("D" + value + "#");
+      } else if (category == COMMAND_CATEGORY_LIGHT) {
+        command_writer_.write("L" + value + "#");
       }
       command_writer_.flush();
       return null;
