@@ -110,6 +110,7 @@ public class DashActivity extends ActionBarActivity {
 
   public void ShutdownEngine() {
     try {
+      try_turn_on_ = false;
       if (socket_ != null && socket_.isConnected()) {
         command_writer_.write(COMMAND_OFF);
         command_writer_.flush();
@@ -199,6 +200,7 @@ public class DashActivity extends ActionBarActivity {
   private TextView speed_textview_;
   private ImageButton engine_button_;
   private Switch light_switch_;
+  private boolean try_turn_on_;
   
   private Socket socket_;
   private PrintWriter command_writer_;
@@ -229,6 +231,9 @@ public class DashActivity extends ActionBarActivity {
         int count = 0;
         while (count++ < 3) {
           try {
+            if (!try_turn_on_) {
+              return "OFF";
+            }
             publishProgress(PROGRESS_START_ENGINE, count);
             socket_.connect(new InetSocketAddress("192.168.240.1", 5678), 3000);
             if (socket_.isConnected()) {
@@ -256,6 +261,7 @@ public class DashActivity extends ActionBarActivity {
     @Override
     protected void onPreExecute () {
       engine_button_.setEnabled(false);
+      try_turn_on_ = true;
       Toast.makeText(DashActivity.this, "Try starting engine", Toast.LENGTH_SHORT).show();
       vibrator_.vibrate(200);
     }
@@ -267,6 +273,7 @@ public class DashActivity extends ActionBarActivity {
       } else if (result == "OFF") {
         ShutdownEngine();
       }
+      try_turn_on_ = false;
       engine_button_.setEnabled(true);
     }
 
