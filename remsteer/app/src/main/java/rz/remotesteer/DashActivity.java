@@ -48,6 +48,7 @@ public class DashActivity extends ActionBarActivity {
     // non UI variables
     vibrator_ = (Vibrator)this.getSystemService(Context.VIBRATOR_SERVICE);
     light_on_ = false;
+    speed_ = 0;
     // Configuring the light switch.
     light_switch_.setOnClickListener(new OnClickListener() {
       @Override
@@ -72,7 +73,9 @@ public class DashActivity extends ActionBarActivity {
         if (!engine_on_) {
           new EngineStarter().execute("Start");
         } else {
-          ShutdownEngine();
+          if (speed_ == 0) {
+            ShutdownEngine();
+          }
         }
       }
     });
@@ -99,6 +102,9 @@ public class DashActivity extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
+    if (speed_ != 0) {
+      return;
+    }
     ShutdownEngine();
     super.onBackPressed();
   }
@@ -142,7 +148,8 @@ public class DashActivity extends ActionBarActivity {
     if (engine_on_) {
       // TODO: add UI updates
       new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
-      speed_textview_.setText((speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed)) + "");
+      speed_ = speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed);
+      speed_textview_.setText(speed_ + "");
       Log.d("Remote Steer", " Speed: " + speed);
     }
   }
@@ -205,6 +212,7 @@ public class DashActivity extends ActionBarActivity {
   private boolean light_on_;
   private Socket socket_;
   private PrintWriter command_writer_;
+  private int speed_;
   
   private final String APPLICATION_TAG = "RemoteSteer";
   
