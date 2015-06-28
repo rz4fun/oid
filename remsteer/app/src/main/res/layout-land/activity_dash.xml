@@ -50,6 +50,7 @@
             android:layout_gravity="center"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true" />
+
     </FrameLayout>
 
     <TableLayout
@@ -180,24 +181,13 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <TextView
+            <ImageButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:id="@+id/textView4"
-                android:layout_column="2" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Light"
-                android:id="@+id/textView"
+                android:id="@+id/light_switch"
                 android:layout_column="2"
+                android:src="@drawable/light_switch_off_80"
+                android:background="@android:color/transparent"
                 android:layout_gravity="center" />
         </TableRow>
 
@@ -205,10 +195,11 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <Switch
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/light_switch"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/textView4"
                 android:layout_column="2" />
         </TableRow>
 

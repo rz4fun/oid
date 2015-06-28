@@ -7,12 +7,10 @@ import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.concurrent.ExecutionException;
 
-import com.example.remotesteer.R;
+import com.rz4fun.remotesteer.R;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.support.v7.app.ActionBarActivity;
 import android.annotation.SuppressLint;
 import android.hardware.SensorManager;
@@ -24,12 +22,10 @@ import android.view.MenuItem;
 import android.view.OrientationEventListener;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Vibrator;
@@ -46,20 +42,25 @@ public class DashActivity extends ActionBarActivity {
     steering_wheel_imageview_ = (ImageView)findViewById(R.id.steer_image);
     speed_seekbar_ = (VerticalSeekBar)findViewById(R.id.speed_seekbar);
     engine_button_ = (ImageButton)findViewById(R.id.engine_button);
-    light_switch_ = (Switch)findViewById(R.id.light_switch);
+    light_switch_ = (ImageButton)findViewById(R.id.light_switch);
     final TextView d_textview = (TextView)findViewById(R.id.d_textview);
     final TextView r_textview = (TextView)findViewById(R.id.r_textview);
     // non UI variables
     vibrator_ = (Vibrator)this.getSystemService(Context.VIBRATOR_SERVICE);
+    light_on_ = false;
     // Configuring the light switch.
-    light_switch_.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+    light_switch_.setOnClickListener(new OnClickListener() {
       @Override
-      public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+      public void onClick(View v) {
         if (engine_on_) {
-          if (isChecked) {
+          if (!light_on_) {
             new VehicleController().execute(COMMAND_CATEGORY_LIGHT, LIGHT_ON);
+            light_switch_.setImageResource(R.drawable.light_switch_on_80);
+            light_on_ = true;
           } else {
             new VehicleController().execute(COMMAND_CATEGORY_LIGHT, LIGHT_OFF);
+            light_switch_.setImageResource(R.drawable.light_switch_off_80);
+            light_on_ = false;
           }
         }
       }
@@ -199,9 +200,9 @@ public class DashActivity extends ActionBarActivity {
   private TextView status_textview_;
   private TextView speed_textview_;
   private ImageButton engine_button_;
-  private Switch light_switch_;
+  private ImageButton light_switch_;
   private boolean try_turn_on_;
-  
+  private boolean light_on_;
   private Socket socket_;
   private PrintWriter command_writer_;
   
