@@ -44,12 +44,15 @@ public class DashActivity extends ActionBarActivity {
     steering_wheel_imageview_ = (ImageView)findViewById(R.id.steer_image);
     speed_seekbar_ = (VerticalSeekBar)findViewById(R.id.speed_seekbar);
     engine_button_ = (ImageButton)findViewById(R.id.engine_button);
-    light_switch_ = (Switch)findViewById(R.id.light_switch);
+    //light_switch_ = (Switch)findViewById(R.id.light_switch);
+    light_switch_ = (ImageButton)findViewById(R.id.light_switch);
     final TextView d_textview = (TextView)findViewById(R.id.d_textview);
     final TextView r_textview = (TextView)findViewById(R.id.r_textview);
     // non UI variables
     vibrator_ = (Vibrator)this.getSystemService(Context.VIBRATOR_SERVICE);
+    light_on_ = false;
     // Configuring the light switch.
+    /*
     light_switch_.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
       @Override
       public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
@@ -58,6 +61,23 @@ public class DashActivity extends ActionBarActivity {
             new VehicleController().execute(COMMAND_CATEGORY_LIGHT, LIGHT_ON);
           } else {
             new VehicleController().execute(COMMAND_CATEGORY_LIGHT, LIGHT_OFF);
+          }
+        }
+      }
+    });
+    */
+    light_switch_.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if (engine_on_) {
+          if (!light_on_) {
+            new VehicleController().execute(COMMAND_CATEGORY_LIGHT, LIGHT_ON);
+            light_switch_.setImageResource(R.drawable.light_switch_on_80);
+            light_on_ = true;
+          } else {
+            new VehicleController().execute(COMMAND_CATEGORY_LIGHT, LIGHT_OFF);
+            light_switch_.setImageResource(R.drawable.light_switch_off_80);
+            light_on_ = false;
           }
         }
       }
@@ -197,9 +217,10 @@ public class DashActivity extends ActionBarActivity {
   private TextView status_textview_;
   private TextView speed_textview_;
   private ImageButton engine_button_;
-  private Switch light_switch_;
+  private ImageButton light_switch_;
+  //private Switch light_switch_;
   private boolean try_turn_on_;
-  
+  private boolean light_on_;
   private Socket socket_;
   private PrintWriter command_writer_;
   
