@@ -117,7 +117,7 @@ public class DashActivity extends ActionBarActivity {
     needle_imageview_.setScaleY((float)0.9);
     needle_imageview_.setPivotX(needle_imageview_.getWidth() / 2);
     needle_imageview_.setPivotY(needle_imageview_.getHeight() / 2);
-    needle_imageview_.setRotation(10);
+    needle_imageview_.setRotation(NEEDLE_ANGLE_OFFSET);
   }
 
   public void UISetEngineOn() {
@@ -161,7 +161,7 @@ public class DashActivity extends ActionBarActivity {
       new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
       speed_ = speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed);
       Log.d("Remote Steer", " Speed: " + speed);
-      float needle_angle = 10 + (float)(16.0 / 9.0) * speed_;
+      float needle_angle = NEEDLE_ANGLE_OFFSET + NEEDLE_ROTATE_RATION * speed_;
       needle_imageview_.setRotation(needle_angle);
     }
   }
@@ -236,6 +236,10 @@ public class DashActivity extends ActionBarActivity {
   public static final int SPEED_ZERO = 90;
   public static final int LIGHT_ON = 1;
   public static final int LIGHT_OFF = 0;
+
+  private static final float NEEDLE_ANGLE_OFFSET = 10;
+  private static final float NEEDLE_ROTATE_RATION =
+      (float)((180 - NEEDLE_ANGLE_OFFSET) - NEEDLE_ANGLE_OFFSET) / (float)SPEED_ZERO;
 
   private Vibrator vibrator_;
 
