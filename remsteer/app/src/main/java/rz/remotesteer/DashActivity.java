@@ -37,12 +37,11 @@ public class DashActivity extends ActionBarActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_dash);
-    status_textview_ = (TextView)findViewById(R.id.textView1);
-    speed_textview_ = (TextView)findViewById(R.id.speed_textview);
     steering_wheel_imageview_ = (ImageView)findViewById(R.id.steer_image);
     speed_seekbar_ = (VerticalSeekBar)findViewById(R.id.speed_seekbar);
     engine_button_ = (ImageButton)findViewById(R.id.engine_button);
     light_switch_ = (ImageButton)findViewById(R.id.light_switch);
+    needle_imageview_ = (ImageView)findViewById(R.id.needle_image);
     final TextView d_textview = (TextView)findViewById(R.id.d_textview);
     final TextView r_textview = (TextView)findViewById(R.id.r_textview);
     // non UI variables
@@ -109,6 +108,18 @@ public class DashActivity extends ActionBarActivity {
     super.onBackPressed();
   }
 
+  @Override
+  public void onWindowFocusChanged(boolean hasFocus) {
+    super.onWindowFocusChanged(hasFocus);
+    // need to configure the initial rotation here in that this is the place where the width and height are
+    // obtainable.
+    needle_imageview_.setScaleX((float)0.9);
+    needle_imageview_.setScaleY((float)0.9);
+    needle_imageview_.setPivotX(needle_imageview_.getWidth() / 2);
+    needle_imageview_.setPivotY(needle_imageview_.getHeight() / 2);
+    needle_imageview_.setRotation(10);
+  }
+
   public void UISetEngineOn() {
     engine_on_ = true;
     engine_button_.setImageResource(R.drawable.b4_120_green);
@@ -149,8 +160,9 @@ public class DashActivity extends ActionBarActivity {
       // TODO: add UI updates
       new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
       speed_ = speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed);
-      speed_textview_.setText(speed_ + "");
       Log.d("Remote Steer", " Speed: " + speed);
+      float needle_angle = 10 + (float)(16.0 / 9.0) * speed_;
+      needle_imageview_.setRotation(needle_angle);
     }
   }
   
@@ -204,10 +216,9 @@ public class DashActivity extends ActionBarActivity {
   private OrientationEventListener orientation_event_listener_;
   private ImageView steering_wheel_imageview_;
   private VerticalSeekBar speed_seekbar_;
-  private TextView status_textview_;
-  private TextView speed_textview_;
   private ImageButton engine_button_;
   private ImageButton light_switch_;
+  private ImageView needle_imageview_;
   private boolean try_turn_on_;
   private boolean light_on_;
   private Socket socket_;
