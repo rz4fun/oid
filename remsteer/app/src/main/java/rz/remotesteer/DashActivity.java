@@ -44,12 +44,12 @@ public class DashActivity extends ActionBarActivity {
     speed_seekbar_ = (VerticalSeekBar)findViewById(R.id.speed_seekbar);
     engine_button_ = (ImageButton)findViewById(R.id.engine_button);
     light_switch_ = (ImageButton)findViewById(R.id.light_switch);
+    hazard_switch_ = (ImageButton)findViewById(R.id.hazard_imagebutton);
     needle_imageview_ = (ImageView)findViewById(R.id.needle_image);
-    final TextView d_textview = (TextView)findViewById(R.id.d_textview);
-    final TextView r_textview = (TextView)findViewById(R.id.r_textview);
     // non UI variables
     vibrator_ = (Vibrator)this.getSystemService(Context.VIBRATOR_SERVICE);
     light_on_ = false;
+    hazard_blink_on_ = false;
     speed_ = 0;
     // Configuring the light switch.
     light_switch_.setOnClickListener(new OnClickListener() {
@@ -64,6 +64,22 @@ public class DashActivity extends ActionBarActivity {
             new VehicleController().execute(COMMAND_CATEGORY_LIGHT, LIGHT_OFF);
             light_switch_.setImageResource(R.drawable.light_switch_off_80);
             light_on_ = false;
+          }
+        }
+      }
+    });
+    hazard_switch_.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if (engine_on_) {
+          if (!hazard_blink_on_) {
+            new VehicleController().execute(COMMAND_CATEGORY_HAZARD, 1);
+            hazard_switch_.setImageResource(R.drawable.hazard_switch_on_80);
+            hazard_blink_on_ = true;
+          } else {
+            new VehicleController().execute(COMMAND_CATEGORY_HAZARD, 0);
+            hazard_switch_.setImageResource(R.drawable.hazard_switch_off_80);
+            hazard_blink_on_ = false;
           }
         }
       }
@@ -223,9 +239,11 @@ public class DashActivity extends ActionBarActivity {
   private VerticalSeekBar speed_seekbar_;
   private ImageButton engine_button_;
   private ImageButton light_switch_;
+  private ImageButton hazard_switch_;
   private ImageView needle_imageview_;
   private boolean try_turn_on_;
   private boolean light_on_;
+  private boolean hazard_blink_on_;
   private Socket socket_;
   private PrintWriter command_writer_;
   private InputStreamReader response_reader_;
@@ -236,6 +254,7 @@ public class DashActivity extends ActionBarActivity {
   public static final int COMMAND_CATEGORY_SPEED = 1;
   public static final int COMMAND_CATEGORY_STEER = 2;
   public static final int COMMAND_CATEGORY_LIGHT = 3;
+  public static final int COMMAND_CATEGORY_HAZARD = 4;
   public static final String COMMAND_OFF = "0#";
 
   public static final int STEER_CENTER = 90;
@@ -330,6 +349,8 @@ public class DashActivity extends ActionBarActivity {
         command_writer_.write("D" + value + "#");
       } else if (category == COMMAND_CATEGORY_LIGHT) {
         command_writer_.write("L" + value + "#");
+      } else if (category == COMMAND_CATEGORY_HAZARD) {
+        command_writer_.write("H" + value + "#");
       }
       command_writer_.flush();
       return null;
