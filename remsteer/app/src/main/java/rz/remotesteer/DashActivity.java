@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -136,6 +137,8 @@ public class DashActivity extends ActionBarActivity {
         command_writer_.flush();
         command_writer_.close();
         command_writer_ = null;
+        response_reader_.close();
+        response_reader_ = null;
         socket_.close();
       }
       socket_ = null;
@@ -225,6 +228,7 @@ public class DashActivity extends ActionBarActivity {
   private boolean light_on_;
   private Socket socket_;
   private PrintWriter command_writer_;
+  private InputStreamReader response_reader_;
   private int speed_;
   
   private final String APPLICATION_TAG = "RemoteSteer";
@@ -242,6 +246,7 @@ public class DashActivity extends ActionBarActivity {
   private static final float NEEDLE_ANGLE_OFFSET = 10;
   private static final float NEEDLE_ROTATE_RATION =
       (float)((180 - NEEDLE_ANGLE_OFFSET) - NEEDLE_ANGLE_OFFSET) / (float)SPEED_ZERO;
+  private static final String SECURITY_TOKEN = "308ac3d3d02a3e6c0efe8e1a3f17df3d";
 
   private Vibrator vibrator_;
   private AsyncTask connection_checker_;
@@ -266,7 +271,12 @@ public class DashActivity extends ActionBarActivity {
             if (socket_.isConnected()) {
               command_writer_ =
                   new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket_.getOutputStream())), true);
-              return "ON";
+              command_writer_.write(SECURITY_TOKEN + "#");
+              command_writer_.flush();
+              response_reader_ = new InputStreamReader(socket_.getInputStream());
+              if (response_reader_.read() == 0x08) {
+                return "ON";
+              }
             }
           } catch (UnknownHostException e) {
             Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
