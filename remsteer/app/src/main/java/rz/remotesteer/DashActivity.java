@@ -247,6 +247,7 @@ public class DashActivity extends ActionBarActivity {
   private Socket socket_;
   private PrintWriter command_writer_;
   private InputStreamReader response_reader_;
+
   private int speed_;
   
   private final String APPLICATION_TAG = "RemoteSteer";
@@ -265,6 +266,8 @@ public class DashActivity extends ActionBarActivity {
   private static final float NEEDLE_ANGLE_OFFSET = 10;
   private static final float NEEDLE_ROTATE_RATION =
       (float)((180 - NEEDLE_ANGLE_OFFSET) - NEEDLE_ANGLE_OFFSET) / (float)SPEED_ZERO;
+  private static final String SECURITY_TOKEN = "308ac3d3d02a3e6c0efe8e1a3f17df3d";
+
   private static final String SECURITY_TOKEN = "308ac3d3d02a3e6c0efe8e1a3f17df3d";
 
   private Vibrator vibrator_;
