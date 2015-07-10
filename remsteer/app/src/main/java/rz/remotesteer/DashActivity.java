@@ -124,12 +124,14 @@ public class DashActivity extends ActionBarActivity {
     engine_on_ = true;
     engine_button_.setImageResource(R.drawable.b4_120_green);
     engine_button_.setEnabled(true);
+    connection_checker_ = new ConnectionChecker();
   }
 
   public void ShutdownEngine() {
     try {
       try_turn_on_ = false;
       if (socket_ != null && socket_.isConnected()) {
+        connection_checker_.cancel(true);
         command_writer_.write(COMMAND_OFF);
         command_writer_.flush();
         command_writer_.close();
@@ -242,6 +244,7 @@ public class DashActivity extends ActionBarActivity {
       (float)((180 - NEEDLE_ANGLE_OFFSET) - NEEDLE_ANGLE_OFFSET) / (float)SPEED_ZERO;
 
   private Vibrator vibrator_;
+  private AsyncTask connection_checker_;
 
   
   private class EngineStarter extends AsyncTask<String, Integer, String> {
@@ -324,5 +327,19 @@ public class DashActivity extends ActionBarActivity {
       return null;
 	}
   }
-  
+
+
+  private class ConnectionChecker extends AsyncTask<Integer, Void, Void> {
+    @Override
+    protected Void doInBackground(Integer... command) {
+      // checks for when socket is available but there is no connection
+      if (socket_ != null && !socket_.isConnected()) {
+        ShutdownEngine();
+      }
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException ex) {}
+      return null;
+    }
+  }
 }
