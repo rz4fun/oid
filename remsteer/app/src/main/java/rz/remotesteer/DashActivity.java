@@ -29,7 +29,6 @@ import android.widget.ImageView;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Vibrator;
 
