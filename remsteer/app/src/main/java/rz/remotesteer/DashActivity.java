@@ -112,10 +112,9 @@ public class DashActivity extends ActionBarActivity {
   @Override
   public void onWindowFocusChanged(boolean hasFocus) {
     super.onWindowFocusChanged(hasFocus);
-    // need to configure the initial rotation here in that this is the place where the width and height are
-    // obtainable.
+    // need to configure the initial rotation here in that this is the place where the width and height are obtainable.
     needle_imageview_.setScaleX((float)0.9);
-    needle_imageview_.setScaleY((float)0.9);
+    needle_imageview_.setScaleY((float) 0.9);
     needle_imageview_.setPivotX(needle_imageview_.getWidth() / 2);
     needle_imageview_.setPivotY(needle_imageview_.getHeight() / 2);
     needle_imageview_.setRotation(NEEDLE_ANGLE_OFFSET);
@@ -125,14 +124,13 @@ public class DashActivity extends ActionBarActivity {
     engine_on_ = true;
     engine_button_.setImageResource(R.drawable.b4_120_green);
     engine_button_.setEnabled(true);
-    connection_checker_ = new ConnectionChecker();
+    new ConnectionChecker().execute();
   }
 
   public void ShutdownEngine() {
     try {
       try_turn_on_ = false;
       if (socket_ != null && socket_.isConnected()) {
-        connection_checker_.cancel(true);
         command_writer_.write(COMMAND_OFF);
         command_writer_.flush();
         command_writer_.close();
@@ -249,8 +247,6 @@ public class DashActivity extends ActionBarActivity {
   private static final String SECURITY_TOKEN = "308ac3d3d02a3e6c0efe8e1a3f17df3d";
 
   private Vibrator vibrator_;
-  private AsyncTask connection_checker_;
-
   
   private class EngineStarter extends AsyncTask<String, Integer, String> {
 
@@ -339,17 +335,35 @@ public class DashActivity extends ActionBarActivity {
   }
 
 
-  private class ConnectionChecker extends AsyncTask<Integer, Void, Void> {
+  private class ConnectionChecker extends AsyncTask<Integer, String, String> {
     @Override
-    protected Void doInBackground(Integer... command) {
+    protected String doInBackground(Integer... command) {
       // checks for when socket is available but there is no connection
-      if (socket_ != null && !socket_.isConnected()) {
+      while (true) {
+        // read() is going to block when there is no data fetched, which is perfectly fine. Once the connection
+        // terminates, read() will throw the IO exception.
+        try {
+          if (response_reader_ != null) {
+            if (response_reader_.read() == -1) {
+              return "DISCONNECT";
+            }
+          }
+        } catch (IOException ex) {
+          return "DISCONNECT";
+        }
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException ex) {
+          Log.d("Remote Steer", ex.getLocalizedMessage());
+        }
+      }
+    }
+
+    @Override
+    protected void onPostExecute (String result) {
+      if (result.equals("DISCONNECT")) {
         ShutdownEngine();
       }
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException ex) {}
-      return null;
     }
   }
 }
