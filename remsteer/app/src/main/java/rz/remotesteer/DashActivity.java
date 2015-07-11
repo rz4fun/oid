@@ -114,7 +114,7 @@ public class DashActivity extends ActionBarActivity {
     super.onWindowFocusChanged(hasFocus);
     // need to configure the initial rotation here in that this is the place where the width and height are obtainable.
     needle_imageview_.setScaleX((float)0.9);
-    needle_imageview_.setScaleY((float) 0.9);
+    needle_imageview_.setScaleY((float)0.9);
     needle_imageview_.setPivotX(needle_imageview_.getWidth() / 2);
     needle_imageview_.setPivotY(needle_imageview_.getHeight() / 2);
     needle_imageview_.setRotation(NEEDLE_ANGLE_OFFSET);
