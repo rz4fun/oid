@@ -7,6 +7,8 @@ import java.io.PrintWriter;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
 import com.rz4fun.remotesteer.R;
@@ -336,23 +338,38 @@ public class DashActivity extends ActionBarActivity {
 
 
   private class ConnectionChecker extends AsyncTask<Integer, String, String> {
+    private void SetSocketTimeout(int timeout) {
+      if (socket_ == null || socket_.isClosed()) {
+        cancel(true);
+        return;
+      }
+      try {
+        socket_.setSoTimeout(timeout);
+      } catch (SocketException ex) {}
+    }
+
     @Override
     protected String doInBackground(Integer... command) {
       // checks for when socket is available but there is no connection
       while (true) {
         // read() is going to block when there is no data fetched, which is perfectly fine. Once the connection
         // terminates, read() will throw the IO exception.
+        Log.d("remote steer", "Testing socket connection...");
+        SetSocketTimeout(5);  // short timeout to avoid disturbing the main communication
         try {
           if (response_reader_ != null) {
-            if (response_reader_.read() == -1) {
-              return "DISCONNECT";
-            }
+            response_reader_.read();
           }
-        } catch (IOException ex) {
+        } catch (SocketTimeoutException ex) {
+          SetSocketTimeout(0);
+        } catch(IOException ex) {
+          SetSocketTimeout(0);
           return "DISCONNECT";
         }
+        SetSocketTimeout(0);
+        Log.d("remote steer", "connection good");
         try {
-          Thread.sleep(1000);
+          Thread.sleep(3000);
         } catch (InterruptedException ex) {
           Log.d("Remote Steer", ex.getLocalizedMessage());
         }
