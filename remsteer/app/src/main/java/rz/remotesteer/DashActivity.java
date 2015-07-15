@@ -179,9 +179,7 @@ public class DashActivity extends ActionBarActivity {
   
   private void SetSpeed(int speed) {
     if (engine_on_) {
-      try {
-        new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed).wait();
-      } catch (Exception ex) {}
+      new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
       speed_ = speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed);
       Log.d("Remote Steer", " Speed: " + speed);
       float needle_angle = NEEDLE_ANGLE_OFFSET + NEEDLE_ROTATE_RATION * speed_;
