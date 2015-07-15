@@ -107,40 +107,6 @@
         android:layout_height="match_parent"
         android:id="@+id/control_layout">
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="D"
-                android:id="@+id/d_textview"
-                android:layout_above="@+id/drive_reverse_switch"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:layout_alignRight="@+id/textView2"
-                android:layout_alignEnd="@+id/textView2"
-                android:textColor="@color/green"
-                android:layout_gravity="left"
-                android:layout_column="2" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="R"
-                android:id="@+id/r_textview"
-                android:layout_above="@+id/drive_reverse_switch"
-                android:layout_alignTop="@+id/d_textview"
-                android:layout_alignRight="@+id/drive_reverse_switch"
-                android:layout_alignEnd="@+id/drive_reverse_switch"
-                android:layout_toEndOf="@+id/textView1"
-                android:layout_toRightOf="@+id/textView1"
-                android:gravity="right"
-                android:layout_gravity="right"
-                android:layout_column="3" />
-        </TableRow>
-
 
         <TableRow
             android:layout_width="match_parent"
@@ -174,6 +140,29 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/light_switch"
+                android:layout_column="2"
+                android:src="@drawable/light_switch_off_80"
+                android:background="@android:color/transparent"
+                android:layout_gravity="center"
+                android:layout_alignParentBottom="true"
+                android:layout_alignRight="@+id/steer_image"
+                android:layout_alignEnd="@+id/steer_image"/>
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/textView4"
+                android:layout_column="2"/>
         </TableRow>
 
         <TableRow
@@ -183,9 +172,9 @@
             <ImageButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/light_switch"
+                android:id="@+id/hazard_imagebutton"
                 android:layout_column="2"
-                android:src="@drawable/light_switch_off_80"
+                android:src="@drawable/hazard_switch_off_80"
                 android:background="@android:color/transparent"
                 android:layout_gravity="center"
                 android:layout_alignParentBottom="true"

@@ -29,7 +29,6 @@ import android.widget.ImageView;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Vibrator;
 
@@ -44,12 +43,12 @@ public class DashActivity extends ActionBarActivity {
     speed_seekbar_ = (VerticalSeekBar)findViewById(R.id.speed_seekbar);
     engine_button_ = (ImageButton)findViewById(R.id.engine_button);
     light_switch_ = (ImageButton)findViewById(R.id.light_switch);
+    hazard_switch_ = (ImageButton)findViewById(R.id.hazard_imagebutton);
     needle_imageview_ = (ImageView)findViewById(R.id.needle_image);
-    final TextView d_textview = (TextView)findViewById(R.id.d_textview);
-    final TextView r_textview = (TextView)findViewById(R.id.r_textview);
     // non UI variables
     vibrator_ = (Vibrator)this.getSystemService(Context.VIBRATOR_SERVICE);
     light_on_ = false;
+    hazard_blink_on_ = false;
     speed_ = 0;
     // Configuring the light switch.
     light_switch_.setOnClickListener(new OnClickListener() {
@@ -64,6 +63,22 @@ public class DashActivity extends ActionBarActivity {
             new VehicleController().execute(COMMAND_CATEGORY_LIGHT, LIGHT_OFF);
             light_switch_.setImageResource(R.drawable.light_switch_off_80);
             light_on_ = false;
+          }
+        }
+      }
+    });
+    hazard_switch_.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if (engine_on_) {
+          if (!hazard_blink_on_) {
+            new VehicleController().execute(COMMAND_CATEGORY_HAZARD, 1);
+            hazard_switch_.setImageResource(R.drawable.hazard_switch_on_80);
+            hazard_blink_on_ = true;
+          } else {
+            new VehicleController().execute(COMMAND_CATEGORY_HAZARD, 0);
+            hazard_switch_.setImageResource(R.drawable.hazard_switch_off_80);
+            hazard_blink_on_ = false;
           }
         }
       }
@@ -126,7 +141,8 @@ public class DashActivity extends ActionBarActivity {
     engine_on_ = true;
     engine_button_.setImageResource(R.drawable.b4_120_green);
     engine_button_.setEnabled(true);
-    new ConnectionChecker().execute();
+    connection_checker_ = new ConnectionChecker();
+    connection_checker_.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
   }
 
   public void ShutdownEngine() {
@@ -139,6 +155,7 @@ public class DashActivity extends ActionBarActivity {
         command_writer_ = null;
         response_reader_.close();
         response_reader_ = null;
+        connection_checker_.cancel(true);
         socket_.close();
       }
       socket_ = null;
@@ -162,7 +179,6 @@ public class DashActivity extends ActionBarActivity {
   
   private void SetSpeed(int speed) {
     if (engine_on_) {
-      // TODO: add UI updates
       new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
       speed_ = speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed);
       Log.d("Remote Steer", " Speed: " + speed);
@@ -205,6 +221,7 @@ public class DashActivity extends ActionBarActivity {
     return true;
   }
 
+
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     // Handle action bar item clicks here. The action bar will
@@ -217,18 +234,32 @@ public class DashActivity extends ActionBarActivity {
     return super.onOptionsItemSelected(item);
   }
 
+
+  private void SetSocketTimeout(int timeout) {
+    if (socket_ == null || socket_.isClosed()) {
+      return;
+    }
+    try {
+      socket_.setSoTimeout(timeout);
+    } catch (SocketException ex) {}
+  }
+
   private boolean engine_on_ = false;
   private OrientationEventListener orientation_event_listener_;
   private ImageView steering_wheel_imageview_;
   private VerticalSeekBar speed_seekbar_;
   private ImageButton engine_button_;
   private ImageButton light_switch_;
+  private ImageButton hazard_switch_;
   private ImageView needle_imageview_;
   private boolean try_turn_on_;
   private boolean light_on_;
+  private boolean hazard_blink_on_;
   private Socket socket_;
   private PrintWriter command_writer_;
   private InputStreamReader response_reader_;
+  private ConnectionChecker connection_checker_;
+
   private int speed_;
   
   private final String APPLICATION_TAG = "RemoteSteer";
@@ -236,6 +267,7 @@ public class DashActivity extends ActionBarActivity {
   public static final int COMMAND_CATEGORY_SPEED = 1;
   public static final int COMMAND_CATEGORY_STEER = 2;
   public static final int COMMAND_CATEGORY_LIGHT = 3;
+  public static final int COMMAND_CATEGORY_HAZARD = 4;
   public static final String COMMAND_OFF = "0#";
 
   public static final int STEER_CENTER = 90;
@@ -246,6 +278,7 @@ public class DashActivity extends ActionBarActivity {
   private static final float NEEDLE_ANGLE_OFFSET = 10;
   private static final float NEEDLE_ROTATE_RATION =
       (float)((180 - NEEDLE_ANGLE_OFFSET) - NEEDLE_ANGLE_OFFSET) / (float)SPEED_ZERO;
+
   private static final String SECURITY_TOKEN = "308ac3d3d02a3e6c0efe8e1a3f17df3d";
 
   private Vibrator vibrator_;
@@ -272,10 +305,14 @@ public class DashActivity extends ActionBarActivity {
               command_writer_.write(SECURITY_TOKEN + "#");
               command_writer_.flush();
               response_reader_ = new InputStreamReader(socket_.getInputStream());
+              SetSocketTimeout(5000);
               if (response_reader_.read() == 0x08) {
+                SetSocketTimeout(0);
                 return "ON";
               }
             }
+          } catch (SocketTimeoutException e) {
+            Log.d(APPLICATION_TAG, "Waiting for handshake timeout.");
           } catch (UnknownHostException e) {
             Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
           } catch (IOException e) {
@@ -286,12 +323,14 @@ public class DashActivity extends ActionBarActivity {
       return "OFF";
     }
 
+
     @Override
     protected void onProgressUpdate(Integer... progress) {
       if (progress[0] == PROGRESS_START_ENGINE) {
         engine_button_.setImageResource(R.drawable.b4_120_yellow);
       }
     }
+
 
     @Override
     protected void onPreExecute () {
@@ -330,6 +369,8 @@ public class DashActivity extends ActionBarActivity {
         command_writer_.write("D" + value + "#");
       } else if (category == COMMAND_CATEGORY_LIGHT) {
         command_writer_.write("L" + value + "#");
+      } else if (category == COMMAND_CATEGORY_HAZARD) {
+        command_writer_.write("H" + value + "#");
       }
       command_writer_.flush();
       return null;
@@ -338,30 +379,19 @@ public class DashActivity extends ActionBarActivity {
 
 
   private class ConnectionChecker extends AsyncTask<Integer, String, String> {
-    private void SetSocketTimeout(int timeout) {
-      if (socket_ == null || socket_.isClosed()) {
-        cancel(true);
-        return;
-      }
-      try {
-        socket_.setSoTimeout(timeout);
-      } catch (SocketException ex) {}
-    }
-
     @Override
     protected String doInBackground(Integer... command) {
       // checks for when socket is available but there is no connection
       while (true) {
-        // read() is going to block when there is no data fetched, which is perfectly fine. Once the connection
-        // terminates, read() will throw the IO exception.
+        // Once the connection terminates, read() will throw the IO exception.
         Log.d("remote steer", "Testing socket connection...");
-        SetSocketTimeout(5);  // short timeout to avoid disturbing the main communication
+        SetSocketTimeout(5);  // short timeout to avoid blocking on read unnecessarily
         try {
           if (response_reader_ != null) {
             response_reader_.read();
           }
         } catch (SocketTimeoutException ex) {
-          SetSocketTimeout(0);
+          Log.d("Remote steer", "Connection Timeout encountered");
         } catch(IOException ex) {
           SetSocketTimeout(0);
           return "DISCONNECT";
