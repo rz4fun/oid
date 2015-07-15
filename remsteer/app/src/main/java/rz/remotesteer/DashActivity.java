@@ -141,7 +141,8 @@ public class DashActivity extends ActionBarActivity {
     engine_on_ = true;
     engine_button_.setImageResource(R.drawable.b4_120_green);
     engine_button_.setEnabled(true);
-    new ConnectionChecker().execute();
+    connection_checker_ = new ConnectionChecker();
+    connection_checker_.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
   }
 
   public void ShutdownEngine() {
@@ -154,6 +155,7 @@ public class DashActivity extends ActionBarActivity {
         command_writer_ = null;
         response_reader_.close();
         response_reader_ = null;
+        connection_checker_.cancel(true);
         socket_.close();
       }
       socket_ = null;
@@ -177,8 +179,9 @@ public class DashActivity extends ActionBarActivity {
   
   private void SetSpeed(int speed) {
     if (engine_on_) {
-      // TODO: add UI updates
-      new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
+      try {
+        new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed).wait();
+      } catch (Exception ex) {}
       speed_ = speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed);
       Log.d("Remote Steer", " Speed: " + speed);
       float needle_angle = NEEDLE_ANGLE_OFFSET + NEEDLE_ROTATE_RATION * speed_;
@@ -220,6 +223,7 @@ public class DashActivity extends ActionBarActivity {
     return true;
   }
 
+
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     // Handle action bar item clicks here. The action bar will
@@ -230,6 +234,16 @@ public class DashActivity extends ActionBarActivity {
       return true;
     }
     return super.onOptionsItemSelected(item);
+  }
+
+
+  private void SetSocketTimeout(int timeout) {
+    if (socket_ == null || socket_.isClosed()) {
+      return;
+    }
+    try {
+      socket_.setSoTimeout(timeout);
+    } catch (SocketException ex) {}
   }
 
   private boolean engine_on_ = false;
@@ -246,6 +260,7 @@ public class DashActivity extends ActionBarActivity {
   private Socket socket_;
   private PrintWriter command_writer_;
   private InputStreamReader response_reader_;
+  private ConnectionChecker connection_checker_;
 
   private int speed_;
   
@@ -292,10 +307,14 @@ public class DashActivity extends ActionBarActivity {
               command_writer_.write(SECURITY_TOKEN + "#");
               command_writer_.flush();
               response_reader_ = new InputStreamReader(socket_.getInputStream());
+              SetSocketTimeout(5000);
               if (response_reader_.read() == 0x08) {
+                SetSocketTimeout(0);
                 return "ON";
               }
             }
+          } catch (SocketTimeoutException e) {
+            Log.d(APPLICATION_TAG, "Waiting for handshake timeout.");
           } catch (UnknownHostException e) {
             Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
           } catch (IOException e) {
@@ -306,12 +325,14 @@ public class DashActivity extends ActionBarActivity {
       return "OFF";
     }
 
+
     @Override
     protected void onProgressUpdate(Integer... progress) {
       if (progress[0] == PROGRESS_START_ENGINE) {
         engine_button_.setImageResource(R.drawable.b4_120_yellow);
       }
     }
+
 
     @Override
     protected void onPreExecute () {
@@ -360,30 +381,19 @@ public class DashActivity extends ActionBarActivity {
 
 
   private class ConnectionChecker extends AsyncTask<Integer, String, String> {
-    private void SetSocketTimeout(int timeout) {
-      if (socket_ == null || socket_.isClosed()) {
-        cancel(true);
-        return;
-      }
-      try {
-        socket_.setSoTimeout(timeout);
-      } catch (SocketException ex) {}
-    }
-
     @Override
     protected String doInBackground(Integer... command) {
       // checks for when socket is available but there is no connection
       while (true) {
-        // read() is going to block when there is no data fetched, which is perfectly fine. Once the connection
-        // terminates, read() will throw the IO exception.
+        // Once the connection terminates, read() will throw the IO exception.
         Log.d("remote steer", "Testing socket connection...");
-        SetSocketTimeout(5);  // short timeout to avoid disturbing the main communication
+        SetSocketTimeout(5);  // short timeout to avoid blocking on read unnecessarily
         try {
           if (response_reader_ != null) {
             response_reader_.read();
           }
         } catch (SocketTimeoutException ex) {
-          SetSocketTimeout(0);
+          Log.d("Remote steer", "Connection Timeout encountered");
         } catch(IOException ex) {
           SetSocketTimeout(0);
           return "DISCONNECT";
