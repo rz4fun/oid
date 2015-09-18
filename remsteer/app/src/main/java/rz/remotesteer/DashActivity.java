@@ -131,7 +131,7 @@ public class DashActivity extends ActionBarActivity {
     super.onWindowFocusChanged(hasFocus);
     // need to configure the initial rotation here in that this is the place where the width and height are obtainable.
     needle_imageview_.setScaleX((float)0.9);
-    needle_imageview_.setScaleY((float)0.9);
+    needle_imageview_.setScaleY((float) 0.9);
     needle_imageview_.setPivotX(needle_imageview_.getWidth() / 2);
     needle_imageview_.setPivotY(needle_imageview_.getHeight() / 2);
     needle_imageview_.setRotation(NEEDLE_ANGLE_OFFSET);
@@ -176,11 +176,21 @@ public class DashActivity extends ActionBarActivity {
       Log.d("Remote Steer", "Steer: " + steer_angle);
     }
   }
-  
+
+  private int ModulateSpeed(int raw_speed) {
+    if (raw_speed <= 45) {
+      return (int)((float)raw_speed * 0.25);
+    } else if (raw_speed < 67.5) {
+      return (int)(11.25 + raw_speed - 45);
+    } else {
+      return (int) ((90 - 33.75) / 22.5 * (raw_speed - 67.5) + 33.75);
+    }
+  }
+
   private void SetSpeed(int speed) {
     if (engine_on_) {
       new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
-      speed_ = speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed);
+      speed_ = ModulateSpeed(speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed));
       Log.d("Remote Steer", " Speed: " + speed);
       float needle_angle = NEEDLE_ANGLE_OFFSET + NEEDLE_ROTATE_RATION * speed_;
       needle_imageview_.setRotation(needle_angle);
