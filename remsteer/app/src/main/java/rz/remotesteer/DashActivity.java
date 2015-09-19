@@ -14,6 +14,9 @@ import java.net.UnknownHostException;
 import com.rz4fun.remotesteer.R;
 
 import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.support.v7.app.ActionBarActivity;
 import android.annotation.SuppressLint;
 import android.hardware.SensorManager;
@@ -22,7 +25,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.OrientationEventListener;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageView;
@@ -114,28 +116,32 @@ public class DashActivity extends ActionBarActivity {
       }
     });
     // Configuring the steering wheel.
-    InitializeRotationMeter();
+    InitializeControlSensor();
   }
+
 
   @Override
   public void onBackPressed() {
     if (speed_ != 0) {
       return;
     }
+    sensor_manager_.unregisterListener(sensor_event_listener_);
     ShutdownEngine();
     super.onBackPressed();
   }
+
 
   @Override
   public void onWindowFocusChanged(boolean hasFocus) {
     super.onWindowFocusChanged(hasFocus);
     // need to configure the initial rotation here in that this is the place where the width and height are obtainable.
     needle_imageview_.setScaleX((float)0.9);
-    needle_imageview_.setScaleY((float)0.9);
+    needle_imageview_.setScaleY((float) 0.9);
     needle_imageview_.setPivotX(needle_imageview_.getWidth() / 2);
     needle_imageview_.setPivotY(needle_imageview_.getHeight() / 2);
     needle_imageview_.setRotation(NEEDLE_ANGLE_OFFSET);
   }
+
 
   public void UISetEngineOn() {
     engine_on_ = true;
@@ -144,6 +150,7 @@ public class DashActivity extends ActionBarActivity {
     connection_checker_ = new ConnectionChecker();
     connection_checker_.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
   }
+
 
   public void ShutdownEngine() {
     try {
@@ -169,13 +176,16 @@ public class DashActivity extends ActionBarActivity {
     }
   }
 
+
   private void SetSteer(int steer_angle) {
     if (engine_on_) {
-      steering_wheel_imageview_.setRotation(steer_angle - 90);
+      steer_ = steer_angle;
+      steering_wheel_imageview_.setRotation(steer_ - 90);
       new VehicleController().execute(COMMAND_CATEGORY_STEER, steer_angle);
       Log.d("Remote Steer", "Steer: " + steer_angle);
     }
   }
+
 
   private int ModulateSpeed(int raw_speed) {
     if (raw_speed <= 45) {
@@ -187,6 +197,7 @@ public class DashActivity extends ActionBarActivity {
     }
   }
 
+
   private void SetSpeed(int speed) {
     if (engine_on_) {
       new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
@@ -196,31 +207,45 @@ public class DashActivity extends ActionBarActivity {
       needle_imageview_.setRotation(needle_angle);
     }
   }
-  
-  
-  private int InitializeRotationMeter() {
+
+
+  private int InitializeControlSensor() {
     steering_wheel_imageview_.setRotation(STEER_CENTER - 90);
-    orientation_event_listener_ = new OrientationEventListener(this, SensorManager.SENSOR_DELAY_GAME) {
-      @SuppressLint("NewApi")
-	  @Override
-      public void onOrientationChanged(int orientation) {
-        if (orientation == -1) {
-          return;
+    sensor_manager_ = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+    steer_sensor_ = sensor_manager_.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+    rotation_matrix_[ 0] = 1;
+    rotation_matrix_[ 4] = 1;
+    rotation_matrix_[ 8] = 1;
+    rotation_matrix_[12] = 1;
+    final float[] orientation_values = new float[3];
+    sensor_event_listener_ = new SensorEventListener() {
+      public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+
+      public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+          SensorManager.getRotationMatrixFromVector(rotation_matrix_, event.values);
+          SensorManager.remapCoordinateSystem(
+              rotation_matrix_, SensorManager.AXIS_X, SensorManager.AXIS_Z, rotation_matrix_);
+          SensorManager.getOrientation(rotation_matrix_, orientation_values);
+          float pitch = (float) Math.toDegrees(orientation_values[1]);
+          float roll = (float) Math.toDegrees(orientation_values[2]);
+          if (pitch > 70 || pitch < -10) {
+            // Disable control if phone is almost parallel to the ground plane or perpendicular to it.
+            return;
+          }
+          if (roll < -180 || roll > 0) {
+            return;
+          }
+          SetSteer((int) (roll + 180));
         }
-        // Note: with the current orientation, left-turn angles range for [180, 270); right-turn (270, 360].
-        if (orientation < 180 || orientation > 360) {
-          return;
-        }
-        SetSteer(orientation - 180);
       }
     };
-    if (orientation_event_listener_.canDetectOrientation()){
-      orientation_event_listener_.enable();
+
+    if (sensor_manager_.registerListener(sensor_event_listener_, steer_sensor_, SensorManager.SENSOR_DELAY_GAME)) {
       return 0;
-    } else{
-      SetSteer(STEER_CENTER);
-      return 1;
     }
+    SetSteer(STEER_CENTER);
+    return 1;
   }
   
   
@@ -255,7 +280,6 @@ public class DashActivity extends ActionBarActivity {
   }
 
   private boolean engine_on_ = false;
-  private OrientationEventListener orientation_event_listener_;
   private ImageView steering_wheel_imageview_;
   private VerticalSeekBar speed_seekbar_;
   private ImageButton engine_button_;
@@ -271,6 +295,13 @@ public class DashActivity extends ActionBarActivity {
   private ConnectionChecker connection_checker_;
 
   private int speed_;
+  private int steer_;
+
+  private SensorManager sensor_manager_;
+  private Sensor steer_sensor_;
+  private SensorEventListener sensor_event_listener_;
+  // sensor-related data
+  private final float[] rotation_matrix_ = new float[16];
   
   private final String APPLICATION_TAG = "RemoteSteer";
   
