@@ -59,8 +59,19 @@ public class VerticalSeekBar extends SeekBar {
         super.onTouchEvent(event);
         break;
       case MotionEvent.ACTION_DOWN:
+        Log.d("Remote-Steer", "OnTouchEvent DOWN");
+        change_switch_ = true;
       case MotionEvent.ACTION_MOVE:
-        setProgress(getMax() - (int)(getMax() * (event.getY() / getHeight())));
+        //change_switch_ = false;
+        //setProgress(getMax() - (int)(getMax() * (event.getY() / getHeight())));
+        float max = getMax();
+        float half = max / 2;
+        float current_value = max * (event.getY() / getHeight());
+        if (current_value < half * 2 / 3) {
+          setProgress((int)max);
+        } else if (current_value > half * 4 / 3) {
+          setProgress(0);
+        }
         break;
       case MotionEvent.ACTION_CANCEL:
         break;
@@ -68,5 +79,14 @@ public class VerticalSeekBar extends SeekBar {
     return true;
   }
 
+  public boolean getChangeSwitch() {
+    return change_switch_;
+  }
+
+  public void setChangeSwitch(boolean change_switch) {
+    change_switch_ = change_switch;
+  }
+
+  private boolean change_switch_;
 }
 
