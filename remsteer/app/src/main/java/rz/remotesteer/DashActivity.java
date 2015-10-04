@@ -102,21 +102,17 @@ public class DashActivity extends ActionBarActivity {
     speed_seekbar_.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
       @Override
       public void onProgressChanged(SeekBar arg0, int arg1, boolean arg2) {
-
-        if (arg1 > 90) {
-          drive_dir_ = 1;
-        } else if (arg1 < 90) {
-          drive_dir_ = -1;
+        if (arg1 > SPEED_ZERO) {
+          drive_dir_ = DRIVE_FORWARD;
+        } else if (arg1 < SPEED_ZERO) {
+          drive_dir_ = DRIVE_BACKWARD;
         } else {
-          drive_dir_ = 0;
+          drive_dir_ = DRIVE_NEUTRAL;
         }
-        //SetSpeed(arg1);
       }
 
       @Override
       public void onStartTrackingTouch(SeekBar arg0) {
-        //start_speed_ = true;
-        //Log.d(APPLICATION_TAG, "Start Tracking Touch " + arg0.getProgress());
       }
 
       @Override
@@ -209,27 +205,26 @@ public class DashActivity extends ActionBarActivity {
 
 
   private void SetSpeed(int speed) {
-    //if (engine_on_) {
+    if (engine_on_) {
       new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
       speed_ = ModulateSpeed(speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed));
-      //Log.d("Remote Steer", " Speed: " + speed);
+      Log.d("Remote Steer", " Speed: " + speed);
       float needle_angle = NEEDLE_ANGLE_OFFSET + NEEDLE_ROTATE_RATION * speed_;
       needle_imageview_.setRotation(needle_angle);
-    //}
+    }
   }
 
-  private int ModulateSpeed2(int control_value) {
-    float speed_value = control_value * 90 / EFFECTIVE_PITCH;
-    return (int)speed_value;
+  private int ScaleSpeedValue(int control_value) {
+    return (int)(control_value * 90 / EFFECTIVE_PITCH);
   }
 
   private int InitializeControlSensor() {
     steering_wheel_imageview_.setRotation(STEER_CENTER - 90);
     sensor_manager_ = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
     steer_sensor_ = sensor_manager_.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
-    rotation_matrix_[ 0] = 1;
-    rotation_matrix_[ 4] = 1;
-    rotation_matrix_[ 8] = 1;
+    rotation_matrix_[0] = 1;
+    rotation_matrix_[4] = 1;
+    rotation_matrix_[8] = 1;
     rotation_matrix_[12] = 1;
     final float[] orientation_values = new float[3];
     sensor_event_listener_ = new SensorEventListener() {
@@ -243,23 +238,21 @@ public class DashActivity extends ActionBarActivity {
           SensorManager.getOrientation(rotation_matrix_, orientation_values);
           float pitch = (float) Math.toDegrees(orientation_values[1]);
           float roll = (float) Math.toDegrees(orientation_values[2]);
-          //if (pitch > 70 || pitch < -10) {
+          if (pitch > 70 || pitch < -10) {
             // Disable control if phone is almost parallel to the ground plane or perpendicular to it.
-          //  return;
-          //}
-          //if (start_speed_) {
-          if (speed_seekbar_.getChangeSwitch()) {
-            start_pitch_ = pitch;
-          //  start_speed_ = false;
-            Log.d(APPLICATION_TAG, "Start Pitch: " + pitch);
-            speed_seekbar_.setChangeSwitch(false);
+            return;
           }
-          if (pitch > start_pitch_ && pitch < start_pitch_ + EFFECTIVE_PITCH) {
-            //Log.d(APPLICATION_TAG, "Control Pitch: " + pitch);
-            if (drive_dir_ == 1) {
-              SetSpeed(90 + ModulateSpeed2((int)(pitch - start_pitch_)));
-            } else if (drive_dir_ == -1) {
-              SetSpeed(90 - ModulateSpeed2((int)(pitch - start_pitch_)));
+          if (speed_seekbar_.getSwitchPositionChanged()) {
+            start_pitch_ = pitch;
+            Log.d(APPLICATION_TAG, "Start Pitch: " + pitch);
+            speed_seekbar_.setSwitchPositionChanged(false);
+          }
+          if ((pitch > start_pitch_) && (pitch < start_pitch_ + EFFECTIVE_PITCH)) {
+            Log.d(APPLICATION_TAG, "Control Pitch: " + pitch);
+            if (drive_dir_ == DRIVE_FORWARD) {
+              SetSpeed(90 + ScaleSpeedValue((int) (pitch - start_pitch_)));
+            } else if (drive_dir_ == DRIVE_BACKWARD) {
+              SetSpeed(90 - ScaleSpeedValue((int) (pitch - start_pitch_)));
             }
           }
           if (roll < -180 || roll > 0) {
@@ -327,6 +320,10 @@ public class DashActivity extends ActionBarActivity {
   private int steer_;
 
   private int drive_dir_;
+  private static final int DRIVE_FORWARD = 1;
+  private static final int DRIVE_NEUTRAL = 0;
+  private static final int DRIVE_BACKWARD = -1;
+
   private float start_pitch_;
 
   private SensorManager sensor_manager_;
@@ -348,7 +345,7 @@ public class DashActivity extends ActionBarActivity {
   public static final int LIGHT_ON = 1;
   public static final int LIGHT_OFF = 0;
 
-  public static final float EFFECTIVE_PITCH = 20;
+  public static final float EFFECTIVE_PITCH = 30;
 
   private static final float NEEDLE_ANGLE_OFFSET = 10;
   private static final float NEEDLE_ROTATE_RATION =
@@ -357,7 +354,8 @@ public class DashActivity extends ActionBarActivity {
   private static final String SECURITY_TOKEN = "308ac3d3d02a3e6c0efe8e1a3f17df3d";
 
   private Vibrator vibrator_;
-  
+
+
   private class EngineStarter extends AsyncTask<String, Integer, String> {
 
 	@Override
