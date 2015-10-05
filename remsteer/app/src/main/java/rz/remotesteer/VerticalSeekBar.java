@@ -3,7 +3,6 @@ package rz.remotesteer;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.SeekBar;
 
@@ -51,16 +50,28 @@ public class VerticalSeekBar extends SeekBar {
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
+    switch_position_changed_ = false;
     if (!isEnabled()) {
       return false;
     }
     switch (event.getAction()) {
       case MotionEvent.ACTION_UP:
         super.onTouchEvent(event);
+        switch_position_changed_ = false;
         break;
       case MotionEvent.ACTION_DOWN:
+        switch_position_changed_ = true;
       case MotionEvent.ACTION_MOVE:
-        setProgress(getMax() - (int)(getMax() * (event.getY() / getHeight())));
+        // Here is the equation for computing regular seek progress:
+        // setProgress(getMax() - (int)(getMax() * (event.getY() / getHeight())));
+        float max = getMax();
+        float half = max / 2;
+        float current_value = max * (event.getY() / getHeight());
+        if (current_value < half * 2 / 3) {
+          setProgress((int)max);
+        } else if (current_value > half * 4 / 3) {
+          setProgress(0);
+        }
         break;
       case MotionEvent.ACTION_CANCEL:
         break;
@@ -68,5 +79,15 @@ public class VerticalSeekBar extends SeekBar {
     return true;
   }
 
+  public boolean getSwitchPositionChanged() {
+    return switch_position_changed_;
+  }
+
+  public void setSwitchPositionChanged(boolean switch_position_changed) {
+    switch_position_changed_ = switch_position_changed;
+  }
+
+  // Indicates whether the seeker, acting as a switch, changed its position.
+  private boolean switch_position_changed_;
 }
 
