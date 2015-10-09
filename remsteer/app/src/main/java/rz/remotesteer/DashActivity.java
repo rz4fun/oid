@@ -426,6 +426,10 @@ public class DashActivity extends ActionBarActivity {
             Log.d(APPLICATION_TAG, "Waiting for handshake timeout.");
           } catch (UnknownHostException e) {
             Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
+          } catch (SocketException se) {
+            if (socket_.isConnected()) {
+              ShutdownEngine();
+            }
           } catch (IOException e) {
             Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
           }
