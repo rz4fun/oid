@@ -52,6 +52,8 @@ public class DashActivity extends ActionBarActivity {
     light_on_ = false;
     hazard_blink_on_ = false;
     speed_ = 0;
+    previous_pitch_ = SENSOR_INITIAL_VALUE;
+    previous_roll_ = SENSOR_INITIAL_VALUE;
     // Configuring the light switch.
     light_switch_.setOnClickListener(new OnClickListener() {
       @Override
@@ -188,7 +190,7 @@ public class DashActivity extends ActionBarActivity {
       steer_ = steer_angle;
       steering_wheel_imageview_.setRotation(steer_ - 90);
       new VehicleController().execute(COMMAND_CATEGORY_STEER, steer_angle);
-      Log.d("Remote Steer", "Steer: " + steer_angle);
+      Log.d(APPLICATION_TAG, "Steer: " + steer_angle);
     }
   }
 
@@ -208,7 +210,7 @@ public class DashActivity extends ActionBarActivity {
     if (engine_on_) {
       new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
       speed_ = ModulateSpeed(speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed));
-      Log.d("Remote Steer", " Speed: " + speed);
+      Log.d(APPLICATION_TAG, " Speed: " + speed);
       float needle_angle = NEEDLE_ANGLE_OFFSET + NEEDLE_ROTATE_RATION * speed_;
       needle_imageview_.setRotation(needle_angle);
     }
@@ -234,31 +236,37 @@ public class DashActivity extends ActionBarActivity {
         if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
           SensorManager.getRotationMatrixFromVector(rotation_matrix_, event.values);
           SensorManager.remapCoordinateSystem(
-              rotation_matrix_, SensorManager.AXIS_X, SensorManager.AXIS_Z, rotation_matrix_);
+                  rotation_matrix_, SensorManager.AXIS_X, SensorManager.AXIS_Z, rotation_matrix_);
           SensorManager.getOrientation(rotation_matrix_, orientation_values);
           float pitch = (float) Math.toDegrees(orientation_values[1]);
-          float roll = (float) Math.toDegrees(orientation_values[2]);
-          if (pitch > 70 || pitch < -10) {
-            // Disable control if phone is almost parallel to the ground plane or perpendicular to it.
-            return;
-          }
-          if (speed_seekbar_.getSwitchPositionChanged()) {
-            start_pitch_ = pitch;
-            Log.d(APPLICATION_TAG, "Start Pitch: " + pitch);
-            speed_seekbar_.setSwitchPositionChanged(false);
-          }
-          if ((pitch > start_pitch_) && (pitch < start_pitch_ + EFFECTIVE_PITCH)) {
-            Log.d(APPLICATION_TAG, "Control Pitch: " + pitch);
-            if (drive_dir_ == DRIVE_FORWARD) {
-              SetSpeed(90 + ScaleSpeedValue((int) (pitch - start_pitch_)));
-            } else if (drive_dir_ == DRIVE_BACKWARD) {
-              SetSpeed(90 - ScaleSpeedValue((int) (pitch - start_pitch_)));
+          if (previous_pitch_ == SENSOR_INITIAL_VALUE || Math.abs(pitch - previous_pitch_) >= SENSOR_VALUE_THRESHOLD) {
+            if (pitch > 70 || pitch < -10) {
+              // Disable control if phone is almost parallel to the ground plane or perpendicular to it.
+              return;
+            }
+            previous_pitch_ = pitch;
+            if (speed_seekbar_.getSwitchPositionChanged()) {
+              start_pitch_ = pitch;
+              Log.d(APPLICATION_TAG, "Start Pitch: " + pitch);
+              speed_seekbar_.setSwitchPositionChanged(false);
+            }
+            if ((pitch > start_pitch_) && (pitch < start_pitch_ + EFFECTIVE_PITCH)) {
+              Log.d(APPLICATION_TAG, "Control Pitch: " + pitch);
+              if (drive_dir_ == DRIVE_FORWARD) {
+                SetSpeed(90 + ScaleSpeedValue((int) (pitch - start_pitch_)));
+              } else if (drive_dir_ == DRIVE_BACKWARD) {
+                SetSpeed(90 - ScaleSpeedValue((int) (pitch - start_pitch_)));
+              }
             }
           }
-          if (roll < -180 || roll > 0) {
-            return;
+          float roll = (float) Math.toDegrees(orientation_values[2]);
+          if (previous_roll_ == SENSOR_INITIAL_VALUE || Math.abs(roll - previous_roll_) >= SENSOR_VALUE_THRESHOLD) {
+            if (roll < -180 || roll > 0) {
+              return;
+            }
+            previous_roll_ = roll;
+            SetSteer((int) (roll + 180));
           }
-          SetSteer((int) (roll + 180));
         }
       }
     };
@@ -329,9 +337,13 @@ public class DashActivity extends ActionBarActivity {
   private SensorManager sensor_manager_;
   private Sensor steer_sensor_;
   private SensorEventListener sensor_event_listener_;
+  private float previous_roll_;
+  private float previous_pitch_;
   // sensor-related data
   private final float[] rotation_matrix_ = new float[16];
-  
+  private static final float SENSOR_VALUE_THRESHOLD = 0.5f;
+  private static final float SENSOR_INITIAL_VALUE = 100f;  // just an out-of-range value
+
   private final String APPLICATION_TAG = "Remote-Steer";
   
   public static final int COMMAND_CATEGORY_SPEED = 1;
