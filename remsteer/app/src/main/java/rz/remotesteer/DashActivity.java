@@ -104,6 +104,25 @@ public class DashActivity extends ActionBarActivity {
     speed_seekbar_.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
       @Override
       public void onProgressChanged(SeekBar arg0, int arg1, boolean arg2) {
+        SetSpeed(arg1);
+      }
+
+      @Override
+      public void onStartTrackingTouch(SeekBar arg0) {
+      }
+
+      @Override
+      public void onStopTrackingTouch(SeekBar arg0) {
+        SetSpeed(SPEED_ZERO);
+        arg0.setProgress(SPEED_ZERO);
+      }
+    });
+    // The code below is commented out temporarily until I make this an selectible option from the
+    // main interface.
+    /*
+    speed_seekbar_.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+      @Override
+      public void onProgressChanged(SeekBar arg0, int arg1, boolean arg2) {
         if (arg1 > SPEED_ZERO) {
           drive_dir_ = DRIVE_FORWARD;
         } else if (arg1 < SPEED_ZERO) {
@@ -123,6 +142,7 @@ public class DashActivity extends ActionBarActivity {
         arg0.setProgress(SPEED_ZERO);
       }
     });
+    */
     // Configuring the steering wheel.
     InitializeControlSensor();
   }
@@ -208,17 +228,19 @@ public class DashActivity extends ActionBarActivity {
 
   private void SetSpeed(int speed) {
     if (engine_on_) {
-      new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed);
       speed_ = ModulateSpeed(speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed));
-      Log.d(APPLICATION_TAG, " Speed: " + speed);
+      Log.d(APPLICATION_TAG, " Raw: " + speed + " Modulated speed: " + speed_);
+      new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed_);
       float needle_angle = NEEDLE_ANGLE_OFFSET + NEEDLE_ROTATE_RATION * speed_;
       needle_imageview_.setRotation(needle_angle);
     }
   }
 
+
   private int ScaleSpeedValue(int control_value) {
     return (int)(control_value * 90 / EFFECTIVE_PITCH);
   }
+
 
   private int InitializeControlSensor() {
     steering_wheel_imageview_.setRotation(STEER_CENTER - 90);
@@ -239,11 +261,14 @@ public class DashActivity extends ActionBarActivity {
                   rotation_matrix_, SensorManager.AXIS_X, SensorManager.AXIS_Z, rotation_matrix_);
           SensorManager.getOrientation(rotation_matrix_, orientation_values);
           float pitch = (float) Math.toDegrees(orientation_values[1]);
+          if (pitch > 70 || pitch < -10) {
+            // Disable control if phone is almost parallel to the ground plane or perpendicular to it.
+            return;
+          }
+          // The code below is commented out temporarily until I make this an selectable option from the
+          // main interface.
+          /*
           if (previous_pitch_ == SENSOR_INITIAL_VALUE || Math.abs(pitch - previous_pitch_) >= SENSOR_VALUE_THRESHOLD) {
-            if (pitch > 70 || pitch < -10) {
-              // Disable control if phone is almost parallel to the ground plane or perpendicular to it.
-              return;
-            }
             previous_pitch_ = pitch;
             if (speed_seekbar_.getSwitchPositionChanged()) {
               start_pitch_ = pitch;
@@ -259,6 +284,7 @@ public class DashActivity extends ActionBarActivity {
               }
             }
           }
+          */
           float roll = (float) Math.toDegrees(orientation_values[2]);
           if (previous_roll_ == SENSOR_INITIAL_VALUE || Math.abs(roll - previous_roll_) >= SENSOR_VALUE_THRESHOLD) {
             if (roll < -180 || roll > 0) {
@@ -271,7 +297,7 @@ public class DashActivity extends ActionBarActivity {
       }
     };
 
-    if (sensor_manager_.registerListener(sensor_event_listener_, steer_sensor_, SensorManager.SENSOR_DELAY_GAME)) {
+    if (sensor_manager_.registerListener(sensor_event_listener_, steer_sensor_, SensorManager.SENSOR_DELAY_UI)) {
       return 0;
     }
     SetSteer(STEER_CENTER);
@@ -327,18 +353,18 @@ public class DashActivity extends ActionBarActivity {
   private int speed_;
   private int steer_;
 
+  // SWITCH speed-control mode variables
   private int drive_dir_;
+  private float start_pitch_;
+  private float previous_pitch_;
   private static final int DRIVE_FORWARD = 1;
   private static final int DRIVE_NEUTRAL = 0;
   private static final int DRIVE_BACKWARD = -1;
-
-  private float start_pitch_;
 
   private SensorManager sensor_manager_;
   private Sensor steer_sensor_;
   private SensorEventListener sensor_event_listener_;
   private float previous_roll_;
-  private float previous_pitch_;
   // sensor-related data
   private final float[] rotation_matrix_ = new float[16];
   private static final float SENSOR_VALUE_THRESHOLD = 0.5f;
