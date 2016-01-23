@@ -190,7 +190,9 @@ public class DashActivity extends ActionBarActivity {
         command_writer_ = null;
         response_reader_.close();
         response_reader_ = null;
-        connection_checker_.cancel(true);
+        if (connection_checker_ != null) {
+          connection_checker_.cancel(true);
+        }
         socket_.close();
       }
       socket_ = null;
@@ -229,10 +231,10 @@ public class DashActivity extends ActionBarActivity {
   private void SetSpeed(int speed) {
     if (engine_on_) {
       speed_ = ModulateSpeed(speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed));
-      Log.d(APPLICATION_TAG, " Raw: " + speed + " Modulated speed: " + speed_);
       new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed_);
       float needle_angle = NEEDLE_ANGLE_OFFSET + NEEDLE_ROTATE_RATION * speed_;
       needle_imageview_.setRotation(needle_angle);
+      Log.d(APPLICATION_TAG, " RS: " + speed + " MS: " + speed_ + " RA: " + needle_angle);
     }
   }
 
@@ -428,7 +430,7 @@ public class DashActivity extends ActionBarActivity {
             Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
           } catch (SocketException se) {
             if (socket_.isConnected()) {
-              ShutdownEngine();
+              return "OFF";
             }
           } catch (IOException e) {
             Log.d(APPLICATION_TAG, APPLICATION_TAG + e.getLocalizedMessage());
