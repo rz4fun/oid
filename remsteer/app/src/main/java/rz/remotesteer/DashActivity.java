@@ -51,7 +51,7 @@ public class DashActivity extends ActionBarActivity {
     vibrator_ = (Vibrator)this.getSystemService(Context.VIBRATOR_SERVICE);
     light_on_ = false;
     hazard_blink_on_ = false;
-    speed_ = 0;
+    speed_ = SPEED_ZERO;
     previous_pitch_ = SENSOR_INITIAL_VALUE;
     previous_roll_ = SENSOR_INITIAL_VALUE;
     // Configuring the light switch.
@@ -94,7 +94,7 @@ public class DashActivity extends ActionBarActivity {
         if (!engine_on_) {
           new EngineStarter().execute("Start");
         } else {
-          if (speed_ == 0) {
+          if (speed_ == SPEED_ZERO) {
             ShutdownEngine();
           }
         }
@@ -150,7 +150,7 @@ public class DashActivity extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
-    if (speed_ != 0) {
+    if (speed_ != SPEED_ZERO) {
       return;
     }
     sensor_manager_.unregisterListener(sensor_event_listener_);
@@ -230,11 +230,12 @@ public class DashActivity extends ActionBarActivity {
 
   private void SetSpeed(int speed) {
     if (engine_on_) {
-      speed_ = ModulateSpeed(speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed));
+      int modulated_speed = ModulateSpeed(speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed));
+      speed_ = modulated_speed + SPEED_ZERO;
       new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed_);
-      float needle_angle = NEEDLE_ANGLE_OFFSET + NEEDLE_ROTATE_RATION * speed_;
+      float needle_angle = NEEDLE_ANGLE_OFFSET + NEEDLE_ROTATE_RATION * modulated_speed;
       needle_imageview_.setRotation(needle_angle);
-      Log.d(APPLICATION_TAG, " RS: " + speed + " MS: " + speed_ + " RA: " + needle_angle);
+      Log.d(APPLICATION_TAG, " IS: " + speed + " RS: " + speed_ + " RA: " + needle_angle);
     }
   }
 
