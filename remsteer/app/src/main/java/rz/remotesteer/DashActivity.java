@@ -230,20 +230,15 @@ public class DashActivity extends ActionBarActivity {
 
   private void SetSpeed(int speed) {
     if (engine_on_) {
-      int modulated_speed = ModulateSpeed(speed > SPEED_ZERO ? (speed - SPEED_ZERO) : (SPEED_ZERO - speed));
-      speed_ = modulated_speed + SPEED_ZERO;
+      int modulated_speed = ModulateSpeed(Math.abs(speed - SPEED_ZERO));
+      speed_ = speed > SPEED_ZERO ? SPEED_ZERO + modulated_speed : SPEED_ZERO - modulated_speed;
       new VehicleController().execute(COMMAND_CATEGORY_SPEED, speed_);
       float needle_angle = NEEDLE_ANGLE_OFFSET + NEEDLE_ROTATE_RATION * modulated_speed;
       needle_imageview_.setRotation(needle_angle);
       Log.d(APPLICATION_TAG, " IS: " + speed + " RS: " + speed_ + " RA: " + needle_angle);
     }
   }
-
-
-  private int ScaleSpeedValue(int control_value) {
-    return (int)(control_value * 90 / EFFECTIVE_PITCH);
-  }
-
+  
 
   private int InitializeControlSensor() {
     steering_wheel_imageview_.setRotation(STEER_CENTER - 90);
