@@ -391,6 +391,10 @@ public class DashActivity extends ActionBarActivity {
 
   private Vibrator vibrator_;
 
+  private static final String ARDUINO_IP = "192.168.240.1";
+  private static final String ESP12E_IP = "192.168.4.1";
+  private static final int PORT = 5678;
+
 
   private class EngineStarter extends AsyncTask<String, Integer, String> {
 
@@ -407,7 +411,8 @@ public class DashActivity extends ActionBarActivity {
               return "OFF";
             }
             publishProgress(PROGRESS_START_ENGINE, count);
-            socket_.connect(new InetSocketAddress("192.168.240.1", 5678), 3000);
+            //socket_.connect(new InetSocketAddress("192.168.240.1", 5678), 3000);
+            socket_.connect(new InetSocketAddress(ESP12E_IP, PORT), 3000);
             if (socket_.isConnected()) {
               command_writer_ =
                   new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket_.getOutputStream())), true);
